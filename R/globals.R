@@ -1,0 +1,37 @@
+utils::globalVariables(c(
+  # tidycensus output
+  "NAME",
+  "variable",
+  "estimate",
+  "moe",
+  "name",
+  "label",
+  # age/sex crosswalk and output
+  "sex",
+  "age_str",
+  "age_min",
+  "age_max",
+  "age_cat_lower",
+  "age_cat_str",
+  "location",
+  "count",
+  "county",
+  "hd",
+  # race/ethnicity
+  "hispanic_mexican",
+  "hispanic_other",
+  "nonhisp_white",
+  "nonhisp_black",
+  "nonhisp_asian",
+  "nonhisp_total",
+  "total",
+  "total_check",
+  "check_dif",
+  "Mexican",
+  "Other Hispanic",
+  "Non-Hispanic White",
+  "Non-Hispanic Black",
+  "Non-Hispanic Asian",
+  "Non-Hispanic Other",
+  "race_eth"
+))
