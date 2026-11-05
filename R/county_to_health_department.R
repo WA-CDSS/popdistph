@@ -21,18 +21,18 @@
 #' @export
 #'
 #' @examples
-#' county_to_hd(c("King", "Benton", "Ferry", "Douglas"))
+#' county_to_health_department(c("King", "Benton", "Ferry", "Douglas"))
 #'
 #' # Use inside a data pipeline
 #' df <- data.frame(county = c("Franklin", "Spokane"), pop = c(100, 200))
-#' df$health_dept <- county_to_hd(df$county)
+#' df$health_department <- county_to_health_department(df$county)
 #' df
-county_to_hd <- function(county) {
-  health_dept <- dplyr::case_when(
+county_to_health_department <- function(county) {
+  health_department <- dplyr::case_when(
     county %in% c("Ferry", "Pend Oreille", "Stevens") ~ "Tri-County",
     county %in% c("Benton", "Franklin") ~ "Benton-Franklin",
     county %in% c("Chelan", "Douglas") ~ "Chelan-Douglas",
     TRUE ~ county
   )
-  return(health_dept)
+  return(health_department)
 }

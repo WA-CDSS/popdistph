@@ -13,14 +13,14 @@ final year of the 5-year period (e.g. \code{2023} for 2019-2023).}
 \item{acs_type}{Either \code{"acs1"} (1-year estimates) or \code{"acs5"} (5-year
 estimates). 1-year estimates are only published for areas with 65,000
 or more people, so smaller counties are missing from \code{"acs1"} results.
-Because the \code{"state"} and \code{"hd"} totals are sums of county estimates,
+Because the \code{"state"} and \code{"health_department"} totals are sums of county estimates,
 they will undercount with \code{"acs1"}.}
 
 \item{geography}{The level to summarize to:
 \itemize{
 \item \code{"county"} (default): one row per county and race/ethnicity group.
 \item \code{"state"}: Washington State totals by race/ethnicity group.
-\item \code{"hd"}: totals by local health jurisdiction and race/ethnicity group.
+\item \code{"health_department"}: totals by local health jurisdiction and race/ethnicity group.
 }}
 }
 \value{
@@ -31,7 +31,7 @@ race/ethnicity group, and these columns:
 \item \code{count}: the estimated number of people.
 \item \code{county} (when \code{geography = "county"}): county name without the
 "County" suffix.
-\item \code{hd} (when \code{geography = "hd"}): the health jurisdiction name.
+\item \code{health_department} (when \code{geography = "health_department"}): the health jurisdiction name.
 }
 }
 \description{
@@ -39,7 +39,7 @@ Downloads American Community Survey (ACS) estimates with
 \code{\link[tidycensus:get_acs]{tidycensus::get_acs()}} and returns population counts for six mutually
 exclusive race/ethnicity groups. Results can be returned for each
 Washington county, for the state as a whole, or for each local health
-jurisdiction (see \code{\link[=county_to_hd]{county_to_hd()}}).
+jurisdiction (see \code{\link[=county_to_health_department]{county_to_health_department()}}).
 }
 \details{
 Counts cover people of all ages (unlike \code{\link[=joint_age_sex_dist]{joint_age_sex_dist()}}, which only
@@ -68,10 +68,10 @@ A Census API key is required. See \code{\link[tidycensus:census_api_key]{tidycen
 # Requires a Census API key
 county_re <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "county")
 state_re <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "state")
-hd_re <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "hd")
+health_department <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "health_department")
 }
 }
 \seealso{
-\code{\link[=county_to_hd]{county_to_hd()}} for the county-to-health-jurisdiction mapping,
+\code{\link[=county_to_health_department]{county_to_health_department()}} for the county-to-health-jurisdiction mapping,
 and \code{\link[=joint_age_sex_dist]{joint_age_sex_dist()}} for counts by age and sex.
 }

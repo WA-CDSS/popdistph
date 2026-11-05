@@ -17,7 +17,7 @@
 #' [tidycensus::get_acs()] and returns population counts for six mutually
 #' exclusive race/ethnicity groups. Results can be returned for each
 #' Washington county, for the state as a whole, or for each local health
-#' jurisdiction (see [county_to_hd()]).
+#' jurisdiction (see [county_to_health_department()]).
 #'
 #' Counts cover people of all ages (unlike [joint_age_sex_dist()], which only
 #' covers adults). Only the point estimates are used; margins of error are
@@ -45,12 +45,12 @@
 #' @param acs_type Either `"acs1"` (1-year estimates) or `"acs5"` (5-year
 #'   estimates). 1-year estimates are only published for areas with 65,000
 #'   or more people, so smaller counties are missing from `"acs1"` results.
-#'   Because the `"state"` and `"hd"` totals are sums of county estimates,
+#'   Because the `"state"` and `"health_department"` totals are sums of county estimates,
 #'   they will undercount with `"acs1"`.
 #' @param geography The level to summarize to:
 #'   * `"county"` (default): one row per county and race/ethnicity group.
 #'   * `"state"`: Washington State totals by race/ethnicity group.
-#'   * `"hd"`: totals by local health jurisdiction and race/ethnicity group.
+#'   * `"health_department"`: totals by local health jurisdiction and race/ethnicity group.
 #'
 #' @returns An ungrouped tibble with one row per combination of geography and
 #'   race/ethnicity group, and these columns:
@@ -58,9 +58,9 @@
 #'   * `count`: the estimated number of people.
 #'   * `county` (when `geography = "county"`): county name without the
 #'     "County" suffix.
-#'   * `hd` (when `geography = "hd"`): the health jurisdiction name.
+#'   * `health_department` (when `geography = "health_department"`): the health jurisdiction name.
 #'
-#' @seealso [county_to_hd()] for the county-to-health-jurisdiction mapping,
+#' @seealso [county_to_health_department()] for the county-to-health-jurisdiction mapping,
 #'   and [joint_age_sex_dist()] for counts by age and sex.
 #'
 #' @export
@@ -70,14 +70,14 @@
 #' # Requires a Census API key
 #' county_re <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "county")
 #' state_re <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "state")
-#' hd_re <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "hd")
+#' health_department <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "health_department")
 #' }
 race_ethn_6_distr <- function(year, acs_type = "acs1", geography = "county") {
   if (!(acs_type %in% c("acs1", "acs5"))) {
     stop("acs_type must be either acs1 or acs5")
   }
-  if (!(geography %in% c("county", "state", "hd"))) {
-    stop("geography must be one of county, state, or hd")
+  if (!(geography %in% c("county", "state", "health_department"))) {
+    stop("geography must be one of county, state, or health_department")
   }
   WA_race_ethn <- tidycensus::get_acs(
     geography = "county",
@@ -156,11 +156,13 @@ race_ethn_6_distr <- function(year, acs_type = "acs1", geography = "county") {
       dplyr::group_by(race_eth) |>
       dplyr::summarise(count = sum(count, na.rm = TRUE), .groups = "drop")
     return(WA_state_counts)
-  } else if (geography == "hd") {
-    hd_race_eth_counts <- WA_county_counts |>
-      dplyr::mutate(hd = popdistph::county_to_hd(county)) |>
-      dplyr::group_by(race_eth, hd) |>
+  } else if (geography == "health_department") {
+    health_department <- WA_county_counts |>
+      dplyr::mutate(
+        health_department = popdistph::county_to_health_department(county)
+      ) |>
+      dplyr::group_by(race_eth, health_department) |>
       dplyr::summarise(count = sum(count, na.rm = TRUE), .groups = "drop")
-    return(hd_race_eth_counts)
+    return(health_department)
   }
 }

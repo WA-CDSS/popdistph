@@ -16,7 +16,7 @@ utils::globalVariables(c(
   "location",
   "count",
   "county",
-  "hd",
+  "health_department",
   # race/ethnicity
   "hispanic_mexican",
   "hispanic_other",

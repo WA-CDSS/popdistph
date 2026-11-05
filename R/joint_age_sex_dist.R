@@ -18,7 +18,7 @@
 #' ("Sex by Age") with [tidycensus::get_acs()] and returns adult (18+)
 #' population counts by sex and age group. Results can be returned for each
 #' Washington county, for the state as a whole, or for each local health
-#' jurisdiction (see [county_to_hd()]).
+#' jurisdiction (see [county_to_health_department()]).
 #'
 #' The detailed B01001 age bins are combined into these groups: `"18-19"`,
 #' `"20-24"`, `"25-29"`, ..., `"75-79"`, and `"80+"`. Only the point
@@ -34,7 +34,7 @@
 #' @param geography The level to summarize to:
 #'   * `"county"` (default): one row per county, sex, and age group.
 #'   * `"state"`: Washington State totals by sex and age group.
-#'   * `"hd"`: totals by local health jurisdiction, sex, and age group.
+#'   * `"health_department"`: totals by local health jurisdiction, sex, and age group.
 #'
 #' @returns A tibble with one row per combination of geography, sex, and age
 #'   group, and these columns:
@@ -43,12 +43,13 @@
 #'   * `count`: the estimated number of people.
 #'   * `county` (when `geography = "county"`): county name without the
 #'     "County" suffix.
-#'   * `hd` (when `geography = "hd"`): the health jurisdiction name.
+#'   * `health_department` (when `geography = "health_department"`):
+#'     the health jurisdiction name.
 #'
-#'   The `"state"` and `"hd"` results are still grouped. Call
+#'   The `"state"` and `"health_department"` results are still grouped. Call
 #'   [dplyr::ungroup()] if needed.
 #'
-#' @seealso [county_to_hd()] for the county-to-health-jurisdiction mapping.
+#' @seealso [county_to_health_department()] for the county-to-health-jurisdiction mapping.
 #'
 #' @export
 #'
@@ -57,14 +58,15 @@
 #' # Requires a Census API key
 #' county_dist <- joint_age_sex_dist(2023, acs_type = "acs5")
 #' state_dist <- joint_age_sex_dist(2023, acs_type = "acs5", geography = "state")
-#' hd_dist <- joint_age_sex_dist(2023, acs_type = "acs5", geography = "hd")
+#' health_department_dist <- joint_age_sex_dist(2023, acs_type = "acs5",
+#'  geography = "health_department")
 #' }
 joint_age_sex_dist <- function(year, acs_type = "acs1", geography = "county") {
   if (!(acs_type %in% c("acs1", "acs5"))) {
     stop("acs_type must be either acs1 or acs5")
   }
-  if (!(geography %in% c("county", "state", "hd"))) {
-    stop("geography must be one of county, state, or hd")
+  if (!(geography %in% c("county", "state", "health_department"))) {
+    stop("geography must be one of county, state, or health_department")
   }
   crosswalk_table <- .age_sex_crosswalk_5yr(year, acs_type)
   age_counts <- tidycensus::get_acs(
@@ -94,10 +96,12 @@ joint_age_sex_dist <- function(year, acs_type = "acs1", geography = "county") {
       dplyr::summarise(count = sum(count), .groups = "drop")
     return(age_sex_washington)
   }
-  if (geography == "hd") {
+  if (geography == "health_department") {
     age_sex_washington <- age_sex_county_counts |>
-      dplyr::mutate(hd = popdistph::county_to_hd(county)) |>
-      dplyr::group_by(sex, age_cat_str, hd) |>
+      dplyr::mutate(
+        health_department = popdistph::county_to_health_department(county)
+      ) |>
+      dplyr::group_by(sex, age_cat_str, health_department) |>
       dplyr::summarise(count = sum(count), .groups = "drop")
     return(age_sex_washington)
   }

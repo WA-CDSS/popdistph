@@ -18,7 +18,7 @@ or more people, so some smaller counties will be missing.}
 \itemize{
 \item \code{"county"} (default): one row per county, sex, and age group.
 \item \code{"state"}: Washington State totals by sex and age group.
-\item \code{"hd"}: totals by local health jurisdiction, sex, and age group.
+\item \code{"health_department"}: totals by local health jurisdiction, sex, and age group.
 }}
 }
 \value{
@@ -30,10 +30,11 @@ group, and these columns:
 \item \code{count}: the estimated number of people.
 \item \code{county} (when \code{geography = "county"}): county name without the
 "County" suffix.
-\item \code{hd} (when \code{geography = "hd"}): the health jurisdiction name.
+\item \code{health_department} (when \code{geography = "health_department"}):
+the health jurisdiction name.
 }
 
-The \code{"state"} and \code{"hd"} results are still grouped. Call
+The \code{"state"} and \code{"health_department"} results are still grouped. Call
 \code{\link[dplyr:group_by]{dplyr::ungroup()}} if needed.
 }
 \description{
@@ -41,7 +42,7 @@ Downloads American Community Survey (ACS) estimates from table B01001
 ("Sex by Age") with \code{\link[tidycensus:get_acs]{tidycensus::get_acs()}} and returns adult (18+)
 population counts by sex and age group. Results can be returned for each
 Washington county, for the state as a whole, or for each local health
-jurisdiction (see \code{\link[=county_to_hd]{county_to_hd()}}).
+jurisdiction (see \code{\link[=county_to_health_department]{county_to_health_department()}}).
 }
 \details{
 The detailed B01001 age bins are combined into these groups: \code{"18-19"},
@@ -55,9 +56,9 @@ A Census API key is required. See \code{\link[tidycensus:census_api_key]{tidycen
 # Requires a Census API key
 county_dist <- joint_age_sex_dist(2023, acs_type = "acs5")
 state_dist <- joint_age_sex_dist(2023, acs_type = "acs5", geography = "state")
-hd_dist <- joint_age_sex_dist(2023, acs_type = "acs5", geography = "hd")
+health_department_dist <- joint_age_sex_dist(2023, acs_type = "acs5", geography = "health_department")
 }
 }
 \seealso{
-\code{\link[=county_to_hd]{county_to_hd()}} for the county-to-health-jurisdiction mapping.
+\code{\link[=county_to_health_department]{county_to_health_department()}} for the county-to-health-jurisdiction mapping.
 }
