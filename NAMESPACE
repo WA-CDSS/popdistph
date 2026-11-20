@@ -2,4 +2,6 @@
 
 export(county_to_health_department)
 export(joint_age_sex_dist)
+export(popdistph_cache_dir)
+export(popdistph_clear_cache)
 export(race_ethn_6_distr)

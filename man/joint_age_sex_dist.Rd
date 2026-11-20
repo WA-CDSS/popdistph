@@ -4,61 +4,108 @@
 \alias{joint_age_sex_dist}
 \title{Joint age and sex distribution of Washington adults}
 \usage{
-joint_age_sex_dist(year, acs_type = "acs1", geography = "county")
+joint_age_sex_dist(
+  year,
+  table_type = "acs1",
+  geography = "county",
+  cache = FALSE
+)
 }
 \arguments{
-\item{year}{Integer. ACS data year. For \code{acs_type = "acs5"}, this is the
-final year of the 5-year period (e.g. \code{2023} for 2019-2023).}
+\item{year}{Integer. Data year. For \code{table_type = "acs5"}, this is the
+final year of the 5-year period (e.g. \code{2023} for 2019-2023). For
+\code{table_type = "dec"}, this must be \code{2010} or \code{2020}.}
 
-\item{acs_type}{Either \code{"acs1"} (1-year estimates) or \code{"acs5"} (5-year
-estimates). 1-year estimates are only published for areas with 65,000
-or more people, so some smaller counties will be missing.}
+\item{table_type}{The census product to use:
+\itemize{
+\item \code{"acs1"} (default): ACS 1-year estimates. Only published for areas
+with 65,000 or more people, so some smaller counties will be missing.
+\item \code{"acs5"}: ACS 5-year estimates. Required for \code{"block group"} and
+\code{"zcta"}.
+\item \code{"dec"}: decennial census. Required for, and only supported with,
+\code{geography = "block"}.
+}}
 
 \item{geography}{The level to summarize to:
 \itemize{
 \item \code{"county"} (default): one row per county, sex, and age group.
 \item \code{"state"}: Washington State totals by sex and age group.
 \item \code{"health_department"}: totals by local health jurisdiction, sex, and age group.
+\item \code{"block group"}: one row per census block group, sex, and age group.
+Requires \code{table_type = "acs5"}.
+\item \code{"block"}: one row per census block, sex, and age group. Requires
+\code{table_type = "dec"} and \code{year = 2010} or \code{2020}.
+\item \code{"zcta"}: one row per ZIP Code Tabulation Area, sex, and age group.
+Requires \code{table_type = "acs5"}. ZCTAs are not nested within states,
+so Washington ZCTAs are identified by their ZIP prefix (980-994). A
+few ZCTAs cross the state line; their counts include the out-of-state
+part.
 }}
+
+\item{cache}{Logical. If \code{TRUE}, the result is saved to disk and an
+identical later call (same \code{year}, \code{table_type}, \code{geography}, and
+popdistph version) reads the saved result instead of downloading again.
+Defaults to \code{FALSE}. See \code{\link[=popdistph_clear_cache]{popdistph_clear_cache()}}.}
 }
 \value{
-A tibble with one row per combination of geography, sex, and age
-group, and these columns:
+An ungrouped tibble with one row per combination of geography,
+sex, and age group, and these columns:
 \itemize{
 \item \code{sex}: \code{"Male"} or \code{"Female"}.
 \item \code{age_cat_str}: the age group, e.g. \code{"25-29"} or \code{"80+"}.
 \item \code{count}: the estimated number of people.
-\item \code{county} (when \code{geography = "county"}): county name without the
-"County" suffix.
+\item \code{county} (when \code{geography} is \code{"county"}, \code{"block group"}, or
+\code{"block"}): county name without the "County" suffix.
+\item \code{block_group} (when \code{geography = "block group"}): the 12-digit block
+group GEOID.
+\item \code{block} (when \code{geography = "block"}): the 15-digit block GEOID.
+\item \code{zcta} (when \code{geography = "zcta"}): the 5-digit ZCTA.
 \item \code{health_department} (when \code{geography = "health_department"}):
 the health jurisdiction name.
 }
-
-The \code{"state"} and \code{"health_department"} results are still grouped. Call
-\code{\link[dplyr:group_by]{dplyr::ungroup()}} if needed.
 }
 \description{
 Downloads American Community Survey (ACS) estimates from table B01001
-("Sex by Age") with \code{\link[tidycensus:get_acs]{tidycensus::get_acs()}} and returns adult (18+)
-population counts by sex and age group. Results can be returned for each
-Washington county, for the state as a whole, or for each local health
-jurisdiction (see \code{\link[=county_to_health_department]{county_to_health_department()}}).
+("Sex by Age") with \code{\link[tidycensus:get_acs]{tidycensus::get_acs()}} (or, for census blocks,
+decennial census counts with \code{\link[tidycensus:get_decennial]{tidycensus::get_decennial()}}) and returns
+adult (18+) population counts by sex and age group. Results can be
+returned for each Washington county, block group, census block, or ZIP
+Code Tabulation Area (ZCTA), for the state as a whole, or for each local
+health jurisdiction (see \code{\link[=county_to_health_department]{county_to_health_department()}}).
 }
 \details{
-The detailed B01001 age bins are combined into these groups: \code{"18-19"},
+The detailed age bins are combined into these groups: \code{"18-19"},
 \code{"20-24"}, \code{"25-29"}, ..., \code{"75-79"}, and \code{"80+"}. Only the point
 estimates are summed; margins of error are dropped.
 
-A Census API key is required. See \code{\link[tidycensus:census_api_key]{tidycensus::census_api_key()}}.
+\strong{Census blocks} (\code{geography = "block"}, \code{table_type = "dec"}) use
+decennial census table P12 (2020 DHC \code{P12_*N} or 2010 SF1 \verb{P012*}).
+P12 uses the same age bins as B01001, so the age groups are identical.
+2020 block counts include the Census Bureau's disclosure-avoidance noise
+and are less reliable for small blocks.
+
+A Census API key is required to download data (not to read a cached
+result). See \code{\link[tidycensus:census_api_key]{tidycensus::census_api_key()}}.
 }
 \examples{
 \dontrun{
 # Requires a Census API key
-county_dist <- joint_age_sex_dist(2023, acs_type = "acs5")
-state_dist <- joint_age_sex_dist(2023, acs_type = "acs5", geography = "state")
-health_department_dist <- joint_age_sex_dist(2023, acs_type = "acs5", geography = "health_department")
+county_dist <- joint_age_sex_dist(2023, table_type = "acs5")
+state_dist <- joint_age_sex_dist(2023, table_type = "acs5", geography = "state")
+health_department_dist <- joint_age_sex_dist(2023, table_type = "acs5",
+ geography = "health_department")
+block_group_dist <- joint_age_sex_dist(2023, table_type = "acs5",
+ geography = "block group")
+zcta_dist <- joint_age_sex_dist(2023, table_type = "acs5", geography = "zcta")
+block_dist <- joint_age_sex_dist(2020, table_type = "dec", geography = "block")
+
+# Save the result; an identical later call reads it from disk
+block_dist <- joint_age_sex_dist(2020, table_type = "dec", geography = "block",
+ cache = TRUE)
 }
 }
 \seealso{
-\code{\link[=county_to_health_department]{county_to_health_department()}} for the county-to-health-jurisdiction mapping.
+\code{\link[=county_to_health_department]{county_to_health_department()}} for the county-to-health-jurisdiction mapping,
+\code{\link[=race_ethn_6_distr]{race_ethn_6_distr()}} for counts by race and ethnicity, and
+\code{\link[=popdistph_clear_cache]{popdistph_clear_cache()}} for managing cached results.
 }

@@ -4,24 +4,50 @@
 \alias{race_ethn_6_distr}
 \title{Six-category race and ethnicity distribution in Washington}
 \usage{
-race_ethn_6_distr(year, acs_type = "acs1", geography = "county")
+race_ethn_6_distr(
+  year,
+  table_type = "acs1",
+  geography = "county",
+  cache = FALSE
+)
 }
 \arguments{
-\item{year}{Integer. ACS data year. For \code{acs_type = "acs5"}, this is the
-final year of the 5-year period (e.g. \code{2023} for 2019-2023).}
+\item{year}{Integer. Data year. For \code{table_type = "acs5"}, this is the
+final year of the 5-year period (e.g. \code{2023} for 2019-2023). For
+\code{table_type = "dec"}, this must be \code{2010} or \code{2020}.}
 
-\item{acs_type}{Either \code{"acs1"} (1-year estimates) or \code{"acs5"} (5-year
-estimates). 1-year estimates are only published for areas with 65,000
-or more people, so smaller counties are missing from \code{"acs1"} results.
-Because the \code{"state"} and \code{"health_department"} totals are sums of county estimates,
-they will undercount with \code{"acs1"}.}
+\item{table_type}{The census product to use:
+\itemize{
+\item \code{"acs1"} (default): ACS 1-year estimates. Only published for areas
+with 65,000 or more people, so smaller counties are missing. Because
+the \code{"state"} and \code{"health_department"} totals are sums of county
+estimates, they will undercount with \code{"acs1"}.
+\item \code{"acs5"}: ACS 5-year estimates. Required for \code{"block group"} and
+\code{"zcta"}.
+\item \code{"dec"}: decennial census. Required for, and only supported with,
+\code{geography = "block"}.
+}}
 
 \item{geography}{The level to summarize to:
 \itemize{
 \item \code{"county"} (default): one row per county and race/ethnicity group.
 \item \code{"state"}: Washington State totals by race/ethnicity group.
 \item \code{"health_department"}: totals by local health jurisdiction and race/ethnicity group.
+\item \code{"block group"}: one row per census block group and race/ethnicity
+group. Requires \code{table_type = "acs5"}.
+\item \code{"block"}: one row per census block and race/ethnicity group. Requires
+\code{table_type = "dec"} and \code{year = 2010} or \code{2020}.
+\item \code{"zcta"}: one row per ZIP Code Tabulation Area and race/ethnicity
+group. Requires \code{table_type = "acs5"}. ZCTAs are not nested within
+states, so Washington ZCTAs are identified by their ZIP prefix
+(980-994). A few ZCTAs cross the state line; their counts include the
+out-of-state part.
 }}
+
+\item{cache}{Logical. If \code{TRUE}, the result is saved to disk and an
+identical later call (same \code{year}, \code{table_type}, \code{geography}, and
+popdistph version) reads the saved result instead of downloading again.
+Defaults to \code{FALSE}. See \code{\link[=popdistph_clear_cache]{popdistph_clear_cache()}}.}
 }
 \value{
 An ungrouped tibble with one row per combination of geography and
@@ -29,17 +55,23 @@ race/ethnicity group, and these columns:
 \itemize{
 \item \code{race_eth}: the race/ethnicity group (see the table above).
 \item \code{count}: the estimated number of people.
-\item \code{county} (when \code{geography = "county"}): county name without the
-"County" suffix.
+\item \code{county} (when \code{geography} is \code{"county"}, \code{"block group"}, or
+\code{"block"}): county name without the "County" suffix.
+\item \code{block_group} (when \code{geography = "block group"}): the 12-digit block
+group GEOID.
+\item \code{block} (when \code{geography = "block"}): the 15-digit block GEOID.
+\item \code{zcta} (when \code{geography = "zcta"}): the 5-digit ZCTA.
 \item \code{health_department} (when \code{geography = "health_department"}): the health jurisdiction name.
 }
 }
 \description{
 Downloads American Community Survey (ACS) estimates with
-\code{\link[tidycensus:get_acs]{tidycensus::get_acs()}} and returns population counts for six mutually
-exclusive race/ethnicity groups. Results can be returned for each
-Washington county, for the state as a whole, or for each local health
-jurisdiction (see \code{\link[=county_to_health_department]{county_to_health_department()}}).
+\code{\link[tidycensus:get_acs]{tidycensus::get_acs()}} (or, for census blocks, decennial census counts
+with \code{\link[tidycensus:get_decennial]{tidycensus::get_decennial()}}) and returns population counts for six
+mutually exclusive race/ethnicity groups. Results can be returned for each
+Washington county, block group, census block, or ZIP Code Tabulation Area
+(ZCTA), for the state as a whole, or for each local health jurisdiction
+(see \code{\link[=county_to_health_department]{county_to_health_department()}}).
 }
 \details{
 Counts cover people of all ages (unlike \code{\link[=joint_age_sex_dist]{joint_age_sex_dist()}}, which only
@@ -61,17 +93,36 @@ The six groups add up to the total population and are built as follows:\tabular{
 American Indian and Alaska Native alone, Native Hawaiian and Other Pacific
 Islander alone, some other race alone, or two or more races.
 
-A Census API key is required. See \code{\link[tidycensus:census_api_key]{tidycensus::census_api_key()}}.
+\strong{Census blocks} (\code{geography = "block"}, \code{table_type = "dec"}) use
+decennial census table P5 (2020 DHC \code{P5_*N} or 2010 SF1 \verb{P005*}). Mexican
+origin is not published at the block level, so block results have five
+groups: \code{"Hispanic"} (all Hispanic or Latino people) replaces \code{"Mexican"}
+and \code{"Other Hispanic"}. The non-Hispanic groups are defined as above. 2020
+block counts include the Census Bureau's disclosure-avoidance noise and
+are less reliable for small blocks.
+
+A Census API key is required to download data (not to read a cached
+result). See \code{\link[tidycensus:census_api_key]{tidycensus::census_api_key()}}.
 }
 \examples{
 \dontrun{
 # Requires a Census API key
-county_re <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "county")
-state_re <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "state")
-health_department <- race_ethn_6_distr(2023, acs_type = "acs5", geography = "health_department")
+county_re <- race_ethn_6_distr(2023, table_type = "acs5", geography = "county")
+state_re <- race_ethn_6_distr(2023, table_type = "acs5", geography = "state")
+health_department <- race_ethn_6_distr(2023, table_type = "acs5",
+ geography = "health_department")
+block_group_re <- race_ethn_6_distr(2023, table_type = "acs5",
+ geography = "block group")
+zcta_re <- race_ethn_6_distr(2023, table_type = "acs5", geography = "zcta")
+block_re <- race_ethn_6_distr(2020, table_type = "dec", geography = "block")
+
+# Save the result; an identical later call reads it from disk
+block_re <- race_ethn_6_distr(2020, table_type = "dec", geography = "block",
+ cache = TRUE)
 }
 }
 \seealso{
 \code{\link[=county_to_health_department]{county_to_health_department()}} for the county-to-health-jurisdiction mapping,
-and \code{\link[=joint_age_sex_dist]{joint_age_sex_dist()}} for counts by age and sex.
+\code{\link[=joint_age_sex_dist]{joint_age_sex_dist()}} for counts by age and sex, and
+\code{\link[=popdistph_clear_cache]{popdistph_clear_cache()}} for managing cached results.
 }
